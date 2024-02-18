@@ -1,0 +1,44 @@
+version: '3.7'
+
+services:
+    app:
+        image: channels
+        build:
+          context: .
+          dockerfile: ./Dockerfile
+        ports:
+            - "8000:8000"
+        volumes:
+            - '/home/${USER}/projetos/poc-channels/src:/usr/src/app'
+        links:
+            - mariadb
+            - redis
+        depends_on:
+            mariadb:
+                condition: service_healthy
+            redis:
+              condition: service_healthy
+    redis:
+      image: "redis:7-alpine"
+      ports:
+        - "6379:6379"
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 5s
+        retries: 3
+    mariadb:
+        image: "mariadb:10.7"
+        ports:
+          - "3306:3306"
+        restart: 'always'
+        healthcheck:
+            test: ['CMD', 'mysql', '-uroot', '-proot']
+            interval: 5s
+            timeout: 5s
+            retries: 3
+        environment:
+            MYSQL_ROOT_PASSWORD: "root"
+            MYSQL_DATABASE: "channels"
+            MYSQL_USER: "dev"
+            MYSQL_PASSWORD: "dev"
